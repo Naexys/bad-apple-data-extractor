@@ -1,0 +1,15 @@
+# Source files
+input/bad-apple.mp4
+input/source.mp4
+
+# Output files
+output/bad-apple.mp3
+output/output.mp3
+output/bad-apple.ogg
+output/output.ogg
+output/bad-apple.json
+output/output.json
+
+# Else
+*/__pycache__/*
+*/__pycache__/
