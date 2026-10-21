@@ -13,3 +13,5 @@ output/output.json
 # Else
 */__pycache__/*
 */__pycache__/
+test.py
+*/test.py

@@ -1,6 +1,8 @@
 import tkinter as tk
 from tkinter import ttk
 from tkinter import messagebox
+from pathlib import Path
+import ffmpeg
 
 class Application:
     def __init__(self):
@@ -29,11 +31,7 @@ class Application:
             self.varOGG = tk.IntVar() # Extract OGG
             self.varDemo = tk.IntVar() # Show demo when done
             
-            # WIP settings, might not use
-            # self.borderSizeX = 0
-            # self.borderSizey = 0
-            # self.borderKeepRatio = True
-            # self.characterSet = [' ', 'O', 'Q', '0']
+            self.buildContent(self.window)
             
             self.window.mainloop()
         else:
@@ -42,9 +40,24 @@ class Application:
 
     # Checks if the input video exists
     def checkInput(self):
-        # TODO the actual check
+        input = [Path('input/bad-apple.mp4'), Path('input/input.mp4')]
+        path = -1
+        for p in input:
+            if p.exists():
+                path = p
+        if path == -1:
+            return 0, 0, 0, 0
+
+        probe = ffmpeg.probe(path.as_posix())
+
+        video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video' and stream['profile'] == 'Main'), None)
+        width = video_stream['width']
+        height = video_stream['height']
+        frameNumerator, frameDenominator = video_stream['r_frame_rate'].split('/')
+        fps = int(frameNumerator)//int(frameDenominator)
+                   
         # returns inputExists (0/1), inputWidth (width in pixel), inputHeight (height in pixel), inputFPS (1 or more)
-        return 1, 1080, 720, 60
+        return 1, width, height, fps
 
     # Add components to the settings window
     def buildContent(self, window):
