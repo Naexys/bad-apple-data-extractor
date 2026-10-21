@@ -22,7 +22,9 @@ class Application:
             # Settings
             self.varWidthRes = tk.IntVar(value=self.inputWidth) # Target horizontal resolution
             self.varHeightRes = tk.IntVar(value=self.inputHeight) # Target vertical resolution
-            self.varRatio = tk.IntVar(value=1) # Keep ratio when editing target res
+            self.traceIDWidth = None
+            self.traceIDHeight = None
+            self.varKeepRatio = tk.IntVar(value=1) # Keep ratio when editing target res
             self.varChars = tk.IntVar() # Use chars instead of bin
             self.varCharWhite = tk.StringVar() # White Char if used
             self.varCharBlack = tk.StringVar() # Black Char if used
@@ -50,7 +52,9 @@ class Application:
 
         probe = ffmpeg.probe(path.as_posix())
 
+        # Isolate main video stream
         video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video' and stream['profile'] == 'Main'), None)
+        # Get video infos from the stream
         width = video_stream['width']
         height = video_stream['height']
         frameNumerator, frameDenominator = video_stream['r_frame_rate'].split('/')
@@ -148,7 +152,7 @@ class Application:
         self.textRatio = tk.Label(window, text='Keep aspect ratio :')
         self.textRatio.grid(column=6, row=12, sticky='e')
         
-        self.checkbuttonRatio = tk.Checkbutton(window, variable=self.varRatio, onvalue=1, offvalue=0)
+        self.checkbuttonRatio = tk.Checkbutton(window, variable=self.varKeepRatio, onvalue=1, offvalue=0)
         self.checkbuttonRatio.grid(column=7, row=12, sticky='w')
 
         # User user input control and effects
@@ -173,7 +177,49 @@ class Application:
         self.varCharWhite.trace_add('write', lambda a, b, c : varCharColourTrim('white'))
         self.varCharBlack.trace_add('write', lambda a, b, c : varCharColourTrim('black'))
         
-        # TODO: add resolution input control (using ratio setting)
+        def resolutionRatioControl(changed):
+            # Width changed
+            if changed == 'width':
+                self.varHeightRes.trace_remove('write', self.traceIDHeight)
+                # Handle manually entered too high / low value
+                try:
+                    if self.varWidthRes.get() > self.inputWidth:
+                        self.varWidthRes.set(self.inputWidth)
+                    if self.varWidthRes.get() < 1:
+                        self.varWidthRes.set(1)
+                except:
+                    pass
+                # Adjust height to match ratio
+                try:
+                    if self.varKeepRatio.get() :
+                        self.varHeightRes.set(round((self.varWidthRes.get()*self.inputHeight)/self.inputWidth))
+                except:
+                    pass
+                self.traceIDHeight = self.varHeightRes.trace_add('write', lambda a, b, c : resolutionRatioControl('height'))
+            
+            # Height changed
+            if changed == 'height':
+                self.varWidthRes.trace_remove('write', self.traceIDWidth)
+                # Handle manually entered too high / low value
+                try:
+                    if self.varHeightRes.get() > self.inputHeight:
+                        self.varHeightRes.set(self.inputHeight)
+                    if self.varHeightRes.get() < 1:
+                        self.varHeightRes.set(1)
+                except:
+                    pass
+                # Adjust width to match ratio
+                try:
+                    if self.varKeepRatio.get() :
+                        self.varWidthRes.set(round((self.varHeightRes.get()*self.inputWidth)/self.inputHeight))
+                except:
+                    pass
+                self.traceIDWidth = self.varWidthRes.trace_add('write', lambda a, b, c : resolutionRatioControl('width'))
+
+        # Add input control on resolution settings
+        self.traceIDWidth = self.varWidthRes.trace_add('write', lambda a, b, c : resolutionRatioControl('width'))
+        self.traceIDHeight = self.varHeightRes.trace_add('write', lambda a, b, c : resolutionRatioControl('height'))
+
         # TODO: add target aspect ratio preview
         
     def startRender(self):
