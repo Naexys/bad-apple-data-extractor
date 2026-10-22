@@ -172,11 +172,11 @@ class Application:
         self.spinboxHeightRes = tk.Spinbox(window, from_=1, to=self.inputHeight, increment=1, textvariable=self.varHeightRes)
         self.spinboxHeightRes.grid(column=8, row=11)
         
-        self.textRatio = tk.Label(window, text='Keep aspect ratio :')
-        self.textRatio.grid(column=6, row=12, sticky='e')
+        self.textRatio = tk.Label(window, text='Keep original aspect ratio :')
+        self.textRatio.grid(column=6, columnspan=2, row=12, sticky='e')
         
         self.checkbuttonRatio = tk.Checkbutton(window, variable=self.varKeepRatio, onvalue=1, offvalue=0)
-        self.checkbuttonRatio.grid(column=7, row=12, sticky='w')
+        self.checkbuttonRatio.grid(column=8, row=12, sticky='w')
 
         # User user input control and effects
         def varCharsCallback(a, b, c):
@@ -199,7 +199,30 @@ class Application:
 
         self.varCharWhite.trace_add('write', lambda a, b, c : varCharColourTrim('white'))
         self.varCharBlack.trace_add('write', lambda a, b, c : varCharColourTrim('black'))
-        
+
+        # Create
+        self.rectRatioPreview = self.canvasPreview.create_rectangle(0, 0, 0, 0, fill='black')
+        # Update target espect ratio preview
+        def updateRatioPreview():
+            canvasSize = int(self.canvasPreview['width'])
+            size = {'width': self.varWidthRes.get(), 'height': self.varHeightRes.get()}
+            if size['width'] >= size['height']:
+                previewWidth = int(canvasSize * 0.8)
+                previewHeight = (previewWidth*size['height'])//size['width']
+                xStart = (canvasSize - previewWidth)//2
+                yStart = (canvasSize - previewHeight)//2
+                self.canvasPreview.coords(self.rectRatioPreview, xStart, yStart, xStart + previewWidth, yStart + previewHeight)
+            elif size['width'] < size['height']:
+                previewHeight = int(canvasSize * 0.8)
+                previewWidth = (previewHeight*size['width'])//size['height']
+                xStart = (canvasSize - previewWidth)//2
+                yStart = (canvasSize - previewHeight)//2
+                self.canvasPreview.coords(self.rectRatioPreview, xStart, yStart, xStart + previewWidth, yStart + previewHeight)
+            self.canvasPreview.update()
+
+        updateRatioPreview()
+
+        # Handle target resolution change
         def resolutionRatioControl(changed):
             # Width changed
             if changed == 'width':
@@ -219,7 +242,6 @@ class Application:
                 except:
                     pass
                 self.traceIDHeight = self.varHeightRes.trace_add('write', lambda a, b, c : resolutionRatioControl('height'))
-            
             # Height changed
             if changed == 'height':
                 self.varWidthRes.trace_remove('write', self.traceIDWidth)
@@ -238,14 +260,22 @@ class Application:
                 except:
                     pass
                 self.traceIDWidth = self.varWidthRes.trace_add('write', lambda a, b, c : resolutionRatioControl('width'))
+            
+            try:
+                self.varHeightRes.get()
+                self.varWidthRes.get()
+                updateRatioPreview()
+            except:
+                pass
 
         # Add input control on resolution settings
         self.traceIDWidth = self.varWidthRes.trace_add('write', lambda a, b, c : resolutionRatioControl('width'))
         self.traceIDHeight = self.varHeightRes.trace_add('write', lambda a, b, c : resolutionRatioControl('height'))
 
-        # TODO: add target aspect ratio preview
+        # TODO: add keep ratio check handle (resize preview and update resolution)
         
     def startRender(self):
+        # TODO: add on more input check
         # TODO: actual render process
         pass
 
