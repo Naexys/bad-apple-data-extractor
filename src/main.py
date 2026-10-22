@@ -32,18 +32,25 @@ class Application:
             self.varMP3 = tk.IntVar(value=1) # Extract MP3
             self.varOGG = tk.IntVar() # Extract OGG
             self.varDemo = tk.IntVar() # Show demo when done
-            
+
+            # Populate window
             self.buildContent(self.window)
-            
+
+            # Window loop
             self.window.mainloop()
+        # Handle input file related errors
         else:
             match errorCode:
+                # File does not exist
                 case 'pathError':
                     messagebox.showerror(title='Error', message='Something went wrong', detail='The input file seems to be missing or misnamed.\nCheck the content of the \'input\' folder and read the \'README.md\' file for additionnal infos.')
+                # ffprobe error
                 case 'ffprobeError':
                     messagebox.showerror(title='Error', message='Something went wrong', detail='FFmpeg was not able to extract the file\'s metadata.')
+                # FFmpeg installation error
                 case 'ffmpegError':
                     messagebox.showerror(title='Error', message='Something went wrong', detail='There was an issue with FFmpeg, it is either not installed or not properly installed.\nType \'ffmpeg\' in a terminal to see if it exists on your system.')
+                # Other (should not happend)
                 case _:
                     messagebox.showerror(title='Error', message='Something went wrong')
                 
@@ -77,11 +84,6 @@ class Application:
         except:
             # ffprobe failed to retreive metadata
             return 0, 0, 0, 0, 'ffprobeError'
-
-        # Tests
-        # return 0, 0, 0, 0, 'pathError'
-        # return 0, 0, 0, 0, 'ffmpegError'
-        # return 0, 0, 0, 0, 'ffprobeError'
                    
         # returns inputExists (0/1), inputWidth (width in pixel), inputHeight (height in pixel), inputFPS (1 or more)
         return 1, width, height, fps, -1
@@ -179,6 +181,19 @@ class Application:
         self.checkbuttonRatio.grid(column=8, row=12, sticky='w')
 
         # User user input control and effects
+        # Handle FPS spinbox
+        def varFPSCallback(a, b, c):
+            try:
+                if self.varFPS.get() > self.inputFPS:
+                    self.varFPS.set(self.inputFPS)
+                if self.varFPS.get() < 0.1:
+                    self.varFPS.set(0.1)
+            except:
+                pass
+
+        self.varFPS.trace_add('write', varFPSCallback)
+
+        # Handle character use check
         def varCharsCallback(a, b, c):
             if self.entryCharWhite['state'] == 'disabled':
                 self.entryCharWhite['state'] = 'normal'
@@ -223,7 +238,7 @@ class Application:
         updateRatioPreview()
 
         # Handle target resolution change
-        def resolutionRatioControl(changed):
+        def varResCallback(changed):
             # Width changed
             if changed == 'width':
                 self.varHeightRes.trace_remove('write', self.traceIDHeight)
@@ -241,7 +256,7 @@ class Application:
                         self.varHeightRes.set(round((self.varWidthRes.get()*self.inputHeight)/self.inputWidth))
                 except:
                     pass
-                self.traceIDHeight = self.varHeightRes.trace_add('write', lambda a, b, c : resolutionRatioControl('height'))
+                self.traceIDHeight = self.varHeightRes.trace_add('write', lambda a, b, c : varResCallback('height'))
             # Height changed
             if changed == 'height':
                 self.varWidthRes.trace_remove('write', self.traceIDWidth)
@@ -259,7 +274,7 @@ class Application:
                         self.varWidthRes.set(round((self.varHeightRes.get()*self.inputWidth)/self.inputHeight))
                 except:
                     pass
-                self.traceIDWidth = self.varWidthRes.trace_add('write', lambda a, b, c : resolutionRatioControl('width'))
+                self.traceIDWidth = self.varWidthRes.trace_add('write', lambda a, b, c : varResCallback('width'))
             
             try:
                 self.varHeightRes.get()
@@ -268,15 +283,38 @@ class Application:
             except:
                 pass
 
-        # Add input control on resolution settings
-        self.traceIDWidth = self.varWidthRes.trace_add('write', lambda a, b, c : resolutionRatioControl('width'))
-        self.traceIDHeight = self.varHeightRes.trace_add('write', lambda a, b, c : resolutionRatioControl('height'))
+        # Handle ratio checkbox status changes
+        def varFPSCallback(a, b, c):
+            if self.varKeepRatio.get():
+                try:
+                    self.varWidthRes.get()
+                    self.varHeightRes.get()
+                    varResCallback('width')
+                except:
+                    pass
 
-        # TODO: add keep ratio check handle (resize preview and update resolution)
-        
+        # Add input control on resolution settings
+        self.traceIDWidth = self.varWidthRes.trace_add('write', lambda a, b, c : varResCallback('width'))
+        self.traceIDHeight = self.varHeightRes.trace_add('write', lambda a, b, c : varResCallback('height'))
+        self.varKeepRatio.trace_add('write', varFPSCallback)
+
+    # Check inputs one last time and start render
     def startRender(self):
-        # TODO: add on more input check
-        # TODO: actual render process
-        pass
+        # Check inputs
+        isOK = True
+        try:
+            self.varFPS.get()
+            self.varWidthRes.get()
+            self.varHeightRes.get()
+            if self.varChars.get():
+                if self.varCharWhite.get() == '' or self.varCharBlack.get() == '':
+                    isOK = False
+        except:
+            isOK = False
+        # If tests are good, start rendering
+        if isOK:
+            # TODO: actual render process
+            print('ready to render')
+            pass
 
 app = Application()
