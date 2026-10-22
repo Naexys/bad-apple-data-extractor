@@ -10,7 +10,7 @@ class Application:
         messagebox.showinfo(title='Welcome !', message='This GUI will allow you to ajust some settings before starting.')
 
         # Check for input file
-        self.inputExists, self.inputWidth, self.inputHeight, self.inputFPS = self.checkInput()
+        self.inputExists, self.inputWidth, self.inputHeight, self.inputFPS, errorCode = self.checkInput()
 
         if self.inputExists:
             # Window
@@ -37,8 +37,17 @@ class Application:
             
             self.window.mainloop()
         else:
-            # TODO: if input does not exist
-            pass 
+            match errorCode:
+                case 'pathError':
+                    messagebox.showerror(title='Error', message='Something went wrong', detail='The input file seems to be missing or misnamed.\nCheck the content of the \'input\' folder and read the \'README.md\' file for additionnal infos.')
+                case 'ffprobeError':
+                    messagebox.showerror(title='Error', message='Something went wrong', detail='FFmpeg was not able to extract the file\'s metadata.')
+                case 'ffmpegError':
+                    messagebox.showerror(title='Error', message='Something went wrong', detail='There was an issue with FFmpeg, it is either not installed or not properly installed.\nType \'ffmpeg\' in a terminal to see if it exists on your system.')
+                case _:
+                    messagebox.showerror(title='Error', message='Something went wrong')
+                
+            
 
     # Checks if the input video exists
     def checkInput(self):
@@ -48,20 +57,34 @@ class Application:
             if p.exists():
                 path = p
         if path == -1:
-            return 0, 0, 0, 0
+            # Input does not exist
+            return 0, 0, 0, 0, 'pathError'
 
-        probe = ffmpeg.probe(path.as_posix())
+        try:
+            probe = ffmpeg.probe(path.as_posix())
+        except:
+            # FFmpeg does not exist or is no properly installed
+            return 0, 0, 0, 0, 'ffmpegError'
 
-        # Isolate main video stream
-        video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video' and stream['profile'] == 'Main'), None)
-        # Get video infos from the stream
-        width = video_stream['width']
-        height = video_stream['height']
-        frameNumerator, frameDenominator = video_stream['r_frame_rate'].split('/')
-        fps = int(frameNumerator)//int(frameDenominator)
+        try:
+            # Isolate main video stream
+            video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video' and stream['profile'] == 'Main'), None)
+            # Get video infos from the stream
+            width = video_stream['width']
+            height = video_stream['height']
+            frameNumerator, frameDenominator = video_stream['r_frame_rate'].split('/')
+            fps = int(frameNumerator)//int(frameDenominator)
+        except:
+            # ffprobe failed to retreive metadata
+            return 0, 0, 0, 0, 'ffprobeError'
+
+        # Tests
+        # return 0, 0, 0, 0, 'pathError'
+        # return 0, 0, 0, 0, 'ffmpegError'
+        # return 0, 0, 0, 0, 'ffprobeError'
                    
         # returns inputExists (0/1), inputWidth (width in pixel), inputHeight (height in pixel), inputFPS (1 or more)
-        return 1, width, height, fps
+        return 1, width, height, fps, -1
 
     # Add components to the settings window
     def buildContent(self, window):
