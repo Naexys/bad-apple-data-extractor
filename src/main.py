@@ -10,7 +10,7 @@ class Application:
         messagebox.showinfo(title='Welcome !', message='This GUI will allow you to ajust some settings before starting.')
 
         # Check for input file
-        self.inputExists, self.inputWidth, self.inputHeight, self.inputFPS, errorCode = self.checkInput()
+        self.inputExists, self.inputWidth, self.inputHeight, self.inputFPS, self.inputLength, self.inputPath, errorCode = self.checkInput()
 
         if self.inputExists:
             # Window
@@ -65,13 +65,13 @@ class Application:
                 path = p
         if path == -1:
             # Input does not exist
-            return 0, 0, 0, 0, 'pathError'
+            return 0, 0, 0, 0, 0, 0, 'pathError'
 
         try:
             probe = ffmpeg.probe(path.as_posix())
         except:
             # FFmpeg does not exist or is no properly installed
-            return 0, 0, 0, 0, 'ffmpegError'
+            return 0, 0, 0, 0, 0, 0, 'ffmpegError'
 
         try:
             # Isolate main video stream
@@ -79,14 +79,15 @@ class Application:
             # Get video infos from the stream
             width = video_stream['width']
             height = video_stream['height']
+            length = video_stream['duration']
             frameNumerator, frameDenominator = video_stream['r_frame_rate'].split('/')
             fps = int(frameNumerator)//int(frameDenominator)
         except:
             # ffprobe failed to retreive metadata
-            return 0, 0, 0, 0, 'ffprobeError'
+            return 0, 0, 0, 0, 0, 0, 'ffprobeError'
                    
         # returns inputExists (0/1), inputWidth (width in pixel), inputHeight (height in pixel), inputFPS (1 or more)
-        return 1, width, height, fps, -1
+        return 1, width, height, fps, length, path, -1
 
     # Add components to the settings window
     def buildContent(self, window):
