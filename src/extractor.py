@@ -1,5 +1,4 @@
 import ffmpeg
-from pathlib import Path
 
 # Audio extracting
 class AudioExtractor:
@@ -47,6 +46,7 @@ class AudioExtractor:
         )
         return processMP3
 
+
     # Return ogg extraction process after starting it
     def startProcessOGG(self):
         processOGG = (
@@ -63,50 +63,3 @@ class AudioExtractor:
             .run_async(pipe_stdout = True)
         )
         return processOGG
-
-# Frames extracting
-class FrameExtractor:
-    def __init__(self, fps, widthRes, heightRes, useChars, charWhite, charBlack, inputPath):
-        # User settings
-        self.fps = fps
-        self.widthRes = widthRes
-        self.heightRes = heightRes
-        self.useChars = useChars
-        self.charWhite = charWhite
-        self.charBlack = charBlack
-        # Input path
-        self.inputPath = inputPath
-        # Output file name and path (without extension), retrived from input file path
-        self.outputFileName = 'output/'+inputPath.split('/')[1].split('.')[0]
-        # Progress log file
-        self.progressLog = Path('tmp/frameProgress.log')
-        self.progressLog.parent.mkdir(parents=True, exist_ok=True)
-        with open(self.progressLog.as_posix(), 'w') as logFile:
-            pass
-
-    # Return process after starting it
-    def getProcess(self):
-        return self.startProcessFrames(), self.progressLog.as_posix()
-
-    # Return frame extracting process after starting it
-    def startProcessFrames(self):
-        processFrames = (
-            ffmpeg
-            # Input
-            .input(self.inputPath.as_posix())
-            # Select only video stream
-            .video
-            # Apply framerate
-            .filter('fps', self.fps)
-            # Rescale
-            .filter('scale', self.widthRes, self.heightRes)
-            # Output: pipe receiving frame data
-            .output('pipe:', format='rawvideo', pix_fmt='rgb24')
-            # Progress log every 0.1s
-            .global_args('-progress', self.progressLog.as_posix(), '-stats_period', '0.1')
-            # Replace output if exists
-            .overwrite_output()
-            # Run async, allowing multiple FFmpeg processes at the same time
-            .run_async(pipe_stdout = True)
-        )
-        return processFrames

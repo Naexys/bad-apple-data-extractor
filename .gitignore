@@ -9,7 +9,6 @@ output/bad-apple.ogg
 output/output.ogg
 output/bad-apple.json
 output/output.json
-tmp/*
 
 # Else
 */__pycache__/*
