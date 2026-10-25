@@ -3,6 +3,7 @@ from tkinter import ttk
 from tkinter import messagebox
 from pathlib import Path
 import ffmpeg
+from . import extractor
 
 class Application:
     def __init__(self):
@@ -79,7 +80,8 @@ class Application:
             # Get video infos from the stream
             width = video_stream['width']
             height = video_stream['height']
-            length = video_stream['duration']
+            length = float(video_stream['duration'])
+            length = round(length * 1000000)
             frameNumerator, frameDenominator = video_stream['r_frame_rate'].split('/')
             fps = int(frameNumerator)//int(frameDenominator)
         except:
@@ -314,8 +316,21 @@ class Application:
             isOK = False
         # If tests are good, start rendering
         if isOK:
-            # TODO: actual render process
-            print('ready to render')
+            self.window.destroy()
+            extractor.Extractor(
+                self.varMP3.get(),
+                self.varOGG.get(),
+                self.varFPS.get(),
+                self.varWidthRes.get(),
+                self.varHeightRes.get(),
+                self.varChars.get(),
+                self.varCharWhite.get(),
+                self.varCharBlack.get(),
+                self.inputLength,
+                self.inputPath
+            )
             pass
 
 app = Application()
+
+# TODO: add disk size preview (to avoid 1.89Go surprises :P)
