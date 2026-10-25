@@ -14,5 +14,5 @@ tmp/*
 # Else
 */__pycache__/*
 */__pycache__/
-test.py
-*/test.py
+test.*
+*/test.*
