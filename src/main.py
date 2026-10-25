@@ -3,7 +3,9 @@ from tkinter import ttk
 from tkinter import messagebox
 from pathlib import Path
 import ffmpeg
+import math
 from . import extractor
+from . import diskspace
 
 class Application:
     def __init__(self):
@@ -34,6 +36,11 @@ class Application:
             self.varOGG = tk.IntVar() # Extract OGG
             self.varDemo = tk.IntVar() # Show demo when done
 
+            # Infos
+            self.inputLengthSeconds = self.inputLength / 1000000
+            self.varNbFrames = tk.IntVar(value=math.floor(self.varFPS.get() * self.inputLengthSeconds))
+            self.varTextSizePreview = tk.StringVar(value=f'Estimated frames output size : {diskspace.getFramesDiskSpace(self.varChars.get(),self.varWidthRes.get(),self.varHeightRes.get(),self.varNbFrames.get())}')
+
             # Populate window
             self.buildContent(self.window)
 
@@ -54,8 +61,6 @@ class Application:
                 # Other (should not happend)
                 case _:
                     messagebox.showerror(title='Error', message='Something went wrong')
-                
-            
 
     # Checks if the input video exists
     def checkInput(self):
@@ -150,10 +155,14 @@ class Application:
 
         # Separator
         ttk.Separator(window, orient='horizontal').grid(column=0, columnspan=5, row=9, sticky='ew', pady=5)
+
+        # File size preview
+        self.textSizePreview = tk.Label(window, textvariable=self.varTextSizePreview)
+        self.textSizePreview.grid(column=0, columnspan=5, row=10)
         
         # Start button
         self.buttonStart = tk.Button(window, text='Start rendering', command=self.startRender)
-        self.buttonStart.grid(column=0, columnspan=5, row=10)
+        self.buttonStart.grid(column=0, columnspan=5, row=11)
 
         # Separator
         ttk.Separator(window, orient='vertical').grid(column=5, row=0, rowspan=13, sticky='ns')
@@ -184,6 +193,9 @@ class Application:
         self.checkbuttonRatio.grid(column=8, row=12, sticky='w')
 
         # User user input control and effects
+        def updateTextSizePreview():
+            self.varTextSizePreview.set(f'Estimated frames output size : {diskspace.getFramesDiskSpace(self.varChars.get(),self.varWidthRes.get(),self.varHeightRes.get(),self.varNbFrames.get())}')
+
         # Handle FPS spinbox
         def varFPSCallback(a, b, c):
             try:
@@ -191,6 +203,14 @@ class Application:
                     self.varFPS.set(self.inputFPS)
                 if self.varFPS.get() < 0.1:
                     self.varFPS.set(0.1)
+                self.varNbFrames.set(math.floor(self.varFPS.get() * self.inputLengthSeconds))
+                # If possible, update frame output size estimation
+                try:
+                    self.varWidthRes.get()
+                    self.varHeightRes.get()
+                    updateTextSizePreview()
+                except:
+                    pass
             except:
                 pass
 
@@ -198,6 +218,7 @@ class Application:
 
         # Handle character use check
         def varCharsCallback(a, b, c):
+            # Enable or disable character fields
             if self.entryCharWhite['state'] == 'disabled':
                 self.entryCharWhite['state'] = 'normal'
             else:
@@ -206,9 +227,17 @@ class Application:
                 self.entryCharBlack['state'] = 'normal'
             else:
                 self.entryCharBlack['state'] = 'disabled'
+            # If possible, update frame output size estimation
+            try:
+                self.varWidthRes.get()
+                self.varHeightRes.get()
+                updateTextSizePreview()
+            except:
+                pass
 
         self.varChars.trace_add('write', varCharsCallback)
 
+        # Handle too much characters in entry (max 1)
         def varCharColourTrim(colour):
             if colour == 'white' and len(self.varCharWhite.get()) > 0:
                 self.varCharWhite.set(self.varCharWhite.get()[0])
@@ -278,11 +307,12 @@ class Application:
                 except:
                     pass
                 self.traceIDWidth = self.varWidthRes.trace_add('write', lambda a, b, c : varResCallback('width'))
-            
+            # If possible, update ratio preview and frame output size estimation
             try:
                 self.varHeightRes.get()
                 self.varWidthRes.get()
                 updateRatioPreview()
+                updateTextSizePreview()
             except:
                 pass
 
