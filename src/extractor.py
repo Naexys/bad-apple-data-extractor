@@ -8,6 +8,7 @@ from tkinter import ttk
 import numpy as np
 import json
 from tkinter import messagebox
+import subprocess
 
 # Audio extracting
 class AudioExtractor:
@@ -360,12 +361,38 @@ class Extractor:
 
         window.mainloop()
 
-        # Wait for processes end
-        if self.extractMP3 and self.extractMP3 != None:
-            audioProcesses['mp3'].wait()
-        if self.extractOGG and self.extractOGG != None:
-            audioProcesses['ogg'].wait()
-        frameProcess.wait()
+        # Terminate remaining processes once the window is closed
+        # Terminate MP3 process
+        if self.extractMP3:
+            if audioProcesses['mp3'].poll() == None:
+                # Terminate
+                audioProcesses['mp3'].terminate()
+                try:
+                    # If not terminated after 2sec, kill
+                    audioProcesses['mp3'].wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    audioProcesses['mp3'].kill()
+                    audioProcesses['mp3'].wait()
+        # Terminate OGG process
+        if self.extractOGG:
+            if audioProcesses['ogg'].poll() == None:
+                # Terminate
+                audioProcesses['ogg'].terminate()
+                try:
+                    # If not terminated after 2sec, kill
+                    audioProcesses['ogg'].wait(timeout=2)
+                except subprocess.TimeoutExpired:
+                    audioProcesses['ogg'].kill()
+                    audioProcesses['ogg'].wait()
+        # Terminate frame process
+        if frameProcess.poll() == None:
+            # Terminate
+            frameProcess.terminate()
+            try:
+                # If not terminated after 2sec, kill
+                frameProcess.wait(timeout=2)
+            except subprocess.TimeoutExpired:
+                frameProcess.kill()
+                frameProcess.wait()
 
-        # TODO: add wait timeout and kill processes after the window is closed
         # TODO: play demo if asked for
