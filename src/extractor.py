@@ -218,6 +218,7 @@ class Extractor:
 
         # Create progress display window
         window = tkinter.Tk()
+        window.title('Extracting ...')
 
         # Build progress bars and labels if process exist
         # MP3
@@ -361,7 +362,7 @@ class Extractor:
                 with open(outputJSONPath, 'w') as JSONOutput:
                     json.dump(self.frames, JSONOutput)
                 # Display end message
-                messagebox.showinfo(title='Done !', message='You should find your output files in the \'output\' folder.\nThanks for using this programm !')
+                messagebox.showinfo(title='Done !', message='You should find your output files in the \'output\' folder.\nThanks for using this program !')
                 window.destroy()
                 if self.playDemo:
                     fileName = self.inputPath.as_posix().split('/')[1].split('.')[0]
