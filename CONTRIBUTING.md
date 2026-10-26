@@ -21,8 +21,8 @@
 | --| - [diskspace.py](./src/diskspace.py)\
 | --| - [extractor.py](./src/extractor.py)\
 | --| - [main.py](./src/main.py)\
-| --| - [.gitattributes](./.gitattributes)\
-| --| - [.gitignore](./.gitignore)\
+| - [.gitattributes](./.gitattributes)\
+| - [.gitignore](./.gitignore)\
 | - [CONTRIBUTING.md](./CONTRIBUTING.md)\
 | - [LICENSE](./LICENSE)\
 | - [README.md](./README.md)\
