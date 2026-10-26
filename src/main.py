@@ -81,7 +81,7 @@ class Application:
 
         try:
             # Isolate main video stream
-            video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video' and stream['profile'] == 'Main'), None)
+            video_stream = next((stream for stream in probe['streams'] if stream['codec_type'] == 'video'), None)
             # Get video infos from the stream
             width = video_stream['width']
             height = video_stream['height']
@@ -357,7 +357,8 @@ class Application:
                 self.varCharWhite.get(),
                 self.varCharBlack.get(),
                 self.inputLength,
-                self.inputPath
+                self.inputPath,
+                self.varDemo.get()
             )
             pass
 

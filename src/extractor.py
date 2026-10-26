@@ -9,6 +9,7 @@ import numpy as np
 import json
 from tkinter import messagebox
 import subprocess
+from . import demo
 
 # Audio extracting
 class AudioExtractor:
@@ -20,6 +21,9 @@ class AudioExtractor:
         self.inputPath = inputPath
         # Output file name and path (without extension), retrived from input file path
         self.outputFileName = 'output/'+inputPath.as_posix().split('/')[1].split('.')[0]
+        # Rename file to 'output' if name was 'input'
+        if self.outputFileName == 'output/input':
+            self.outputFileName = 'output/output'
         # Progress log files
         self.progressLogMP3 = Path('tmp/mp3Progress.log')
         self.progressLogMP3.parent.mkdir(parents=True, exist_ok=True)
@@ -87,6 +91,9 @@ class FrameExtractor:
         self.inputPath = inputPath
         # Output file name and path (without extension), retrived from input file path
         self.outputFileName = 'output/'+inputPath.as_posix().split('/')[1].split('.')[0]
+        # If input name was 'input', set to 'output'
+        if self.outputFileName == 'input':
+            self.outputFileName = 'output'
         # Progress log file
         self.progressLog = Path('tmp/frameProgress.log')
         self.progressLog.parent.mkdir(parents=True, exist_ok=True)
@@ -122,7 +129,7 @@ class FrameExtractor:
 
 # Extractors manager
 class Extractor:
-    def __init__(self, extractMP3, extractOGG, fps, widthRes, heightRes, useChars, charWhite, charBlack, inputLength, inputPath):
+    def __init__(self, extractMP3, extractOGG, fps, widthRes, heightRes, useChars, charWhite, charBlack, inputLength, inputPath, playDemo):
         # Store settings recieved from settings GUI
         self.extractMP3 = extractMP3
         self.extractOGG = extractOGG
@@ -134,6 +141,7 @@ class Extractor:
         self.charBlack = charBlack
         self.inputLength = int(inputLength)
         self.inputPath = inputPath
+        self.playDemo = playDemo
         self.processMP3 = None
         self.processOGG = None
         self.processFrames = None
@@ -347,11 +355,20 @@ class Extractor:
             if hasEnded['mp3'] and hasEnded['ogg'] and hasEnded['frame']:
                 # Dump frames as JSON
                 outputJSONPath = 'output/'+self.inputPath.as_posix().split('/')[1].split('.')[0]+'.json'
+                # Rename output file to 'output' if it was 'input'
+                if outputJSONPath == 'output/input.json':
+                    outputJSONPath = 'output/output.json'
                 with open(outputJSONPath, 'w') as JSONOutput:
                     json.dump(self.frames, JSONOutput)
                 # Display end message
                 messagebox.showinfo(title='Done !', message='You should find your output files in the \'output\' folder.\nThanks for using this programm !')
                 window.destroy()
+                if self.playDemo:
+                    fileName = self.inputPath.as_posix().split('/')[1].split('.')[0]
+                    # If input file was named 'input', change to 'output'
+                    if fileName == 'input':
+                        fileName = 'output'
+                    demo.startDemo(self.widthRes, self.heightRes, fileName, self.useChars, self.charWhite, self.charBlack, self.extractMP3, self.extractOGG, self.fps)
             else:
                 # Set an 'alarm' to trigger again this function
                 window.after(20, actualize)
